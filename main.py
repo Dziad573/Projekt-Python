@@ -1,87 +1,147 @@
 import tkinter as tk
 
-przyciski = ['0', '0', '0', '0', '\u221A', '%', 'x^2', 'C', '\u21BA', '(', ')', 'pi', '7', '8', '9', '/', '4', '5', '6', 'x', '1', '2', '3', '-', '=', '0', ',', '+']
+przyciski = [
+     '7', '8', '9', '-',
+     '(', ')','\u21BA', 'C',
+     '7', '8', '9','-',
+     '4', '5', '6','/',
+     '1', '2', '3','*',
+     'x^2', '0', '+','=',
+]
+
+
+def infix_na_onp(wyrazenie):
+    dzialania = {
+        '+': 1,
+        '-': 1,
+        '*': 2,
+        '/': 2,
+        '^': 3
+    }
+
+    stos = []
+    onp = ''
+    for w in wyrazenie:
+        if w == '(':
+            stos.append(w)
+        elif w == ')':
+            while stos and stos[-1] != '(':
+                onp += stos.pop()
+            stos.pop()  # Usuń otwierający nawias '('
+        elif w in dzialania:
+            while stos and stos[-1] != '(' and dzialania.get(stos[-1], 0) >= dzialania.get(w, 0):
+                onp += stos.pop()
+            stos.append(w)
+        else:
+            onp += w
+    while stos:
+        onp += stos.pop()
+    print(onp)
+    return onp
+
+def oblicz_onp(onp):
+    stos = []
+    for znak in onp:
+        if znak.isdigit():
+            stos.append(float(znak))
+        elif znak in "+-*/^":
+            b = stos.pop()
+            a = stos.pop()
+            if znak == '+':
+                stos.append(a + b)
+            elif znak == '-':
+                stos.append(a - b)
+            elif znak == '*':
+                stos.append(a * b)
+            elif znak == '/':
+                stos.append(a / b)
+            elif znak == '^':
+                stos.append(a ** b)
+    if len(stos) == 1:
+        return stos[0]
+    else:
+        return "Błąd"
+
 
 def inicjalizacjaOkna():
     root = tk.Tk()
-    root.geometry('1022x820')
+    root.geometry('1016x712')
     root.title('Kalkulator')
-    # root.resizable(False, False)
     return root
 
-# Ekran wyświetlania operacji
 def inicjalizacjaEkranu(root):
     ekran = tk.Text(root, bg="black", width=77, height=10, borderwidth=0, padx=10, pady=7, fg='white')
     ekran.grid(row=0, column=0, columnspan=3, sticky="n")
     return ekran
 
 def inicjalizacjaKonteneraEkranu(root):
-    kontenerEkranu = tk.Label(root, bg='#4e4e4e', width=90, height=53, pady=11)
+    kontenerEkranu = tk.Label(root, bg='#4e4e4e', fg='white', width=90, height=53, pady=11)
     kontenerEkranu.grid(row=0, column=0, columnspan=3)
     return kontenerEkranu
+
+def inicjalizacjaKonteneraHistorii(root):
+    kontenerHistorii = tk.Text(root, bg='#292929', fg='white', width=45, height=43, pady=12, padx=10)
+    kontenerHistorii.grid(row=0, rowspan=5, column=5, columnspan=3, sticky="n")
+    return kontenerHistorii
 
 def label(kontenerEkranu):
     label = tk.Label(kontenerEkranu, bg="red", pady=24)
     label.grid(row=1, column=0, columnspan=3)
     return label
 
-# Operacje na przyciskach
-def klik(ekran, przycisk, oknoHistorii):
+def klik(ekran, przycisk, oblicz):
     def obsluga():
-        if przycisk == '\u21BA':
+        if przycisk == '=':
+            wyrazenie = ekran.get('1.0', tk.END).strip()
+            onp = infix_na_onp(wyrazenie)
+            wynik = oblicz_onp(onp)
+            ekran.delete('1.0', tk.END)
+            ekran.insert(tk.END, str(wynik))
+            kontenerHistorii.insert(tk.END, str(wyrazenie) + ' = ' + str(wynik) + '\n')
+        elif przycisk == 'C':
+            ekran.delete('1.0', tk.END)
+        elif przycisk == 'x^2':
+            tekst = przycisk if przycisk != 'x^2' else '^2'
+            ekran.insert(tk.END, tekst)
+        elif przycisk == '\u21BA':
             bufor = ekran.get(1.0, 'end-2c')
             ekran.delete(1.0, tk.END)
             ekran.insert(1.0, bufor)
-        elif przycisk == 'C':
-            ekran.delete(1.0, tk.END)
-        elif przycisk == '=':
-            zaktualizujHistorie(ekran)()
         else:
-            tekst = przycisk if przycisk != 'x^2' else '^2'
-            ekran.insert(tk.END, tekst)
+            ekran.insert(tk.END, przycisk)
     return obsluga
 
-def zaktualizujHistorie(ekran):
-    def f():
-        tekst = ekran.get(1.0, 'end-1c')
-        for i in range(len(oknoHistorii)):
-            if not oknoHistorii[i]['text']:
-                oknoHistorii[i]['text'] = oknoHistorii[i - 1]['text']
-                oknoHistorii[i]['text'] = tekst
-                break
-    return f
 
-def inicjalizacjaPrzyciskow(kontenerEkranu, oknoHistorii):
-    przyciska = [tk.Button(kontenerEkranu, text=przycisk, width=18, height=4, pady=18, padx=11, borderwidth=1) for przycisk in przyciski]
+def oblicz(ekran, kontenerHistorii):
+    wyrazenie = ekran.get('1.0', tk.END)
+    wyrazenie = wyrazenie.strip()  # Usuń białe znaki na początku i końcu
+    try:
+        #wynik = str(eval(wyrazenie))
+        #kontenerHistorii.insert(tk.END, wyrazenie + ' = ' + wynik + '\n')
+        ekran.delete('1.0', tk.END)
+        #ekran.insert(tk.END, wynik)
+    except Exception as e:
+        ekran.delete('1.0', tk.END)
+        ekran.insert(tk.END, 'Błąd')
 
+
+def inicjalizacjaPrzyciskow(kontenerEkranu, ekran):
+    button = {}
     j = 1
-    for i in range(len(przyciski)):
+    for i, przycisk in enumerate(przyciski):
         if i % 4 == 0:
             j += 1
-        przyciska[i].grid(row=j, column=i % 4, columnspan=1, pady=2, padx=2)
-        przyciska[i].configure(command=klik(ekran, przyciska[i]['text'], oknoHistorii))
+        button[i] = tk.Button(kontenerEkranu, text=przycisk, width=18, height=4, pady=18, padx=11, borderwidth=1)
+        button[i].grid(row=j, column=i % 4, columnspan=1, pady=2, padx=2)
+        button[i].configure(command=klik(ekran, przycisk, oblicz))
 
-    return przyciska
-
-def inicjalizacjaKonteneraHistorii(root):
-    kontenerHistorii = tk.Frame(root, bg='green', width=60, height=50)
-    kontenerHistorii.grid(row=0, columnspan=2, column=3)
-    return kontenerHistorii
-
-# ROZMIAR DLA 1 = 70 (WYSOKOŚĆ)
-def inicjalizacjaOknaHistorii(kontenerHistorii):
-    czcionka = ("Arial", 25)
-    oknoHistorii = [tk.Label(kontenerHistorii, text="", font=czcionka, anchor='w', fg="white", bg='#292929', width=19, height=2, padx=12) for i in range(10)]
-    for i in range(len(oknoHistorii)):
-        oknoHistorii[i].grid(row=i, column=4, columnspan=2)
-    return oknoHistorii
+    return button
 
 if __name__ == '__main__':
     root = inicjalizacjaOkna()
     kontenerEkranu = inicjalizacjaKonteneraEkranu(root)
     ekran = inicjalizacjaEkranu(root)
     label = label(kontenerEkranu)
-    przyciska = inicjalizacjaPrzyciskow(kontenerEkranu, 1)
+    button = inicjalizacjaPrzyciskow(kontenerEkranu, ekran)
     kontenerHistorii = inicjalizacjaKonteneraHistorii(root)
-    oknoHistorii = inicjalizacjaOknaHistorii(kontenerHistorii)
     root.mainloop()
