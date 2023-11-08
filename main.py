@@ -1,4 +1,5 @@
 import tkinter as tk
+import math
 
 przyciski = [
      '7', '8', '9', '-',
@@ -8,9 +9,9 @@ przyciski = [
      '1', '2', '3','*',
      'x^2', '0', '+','=',
 ]
+wynik = 0
 
-
-def infix_na_onp(wyrazenie):
+def priorytet(wyrazenie):
     dzialania = {
         '+': 1,
         '-': 1,
@@ -37,9 +38,11 @@ def infix_na_onp(wyrazenie):
     while stos:
         onp += stos.pop()
     print(onp)
+    kontenerHistorii.insert(tk.END, str(wyrazenie) + ' = ' + str(onp) + '\n')
     return onp
 
-def oblicz_onp(onp):
+def oblicz_onp(wyrazenie):
+    onp = priorytet(wyrazenie)
     stos = []
     for znak in onp:
         if znak.isdigit():
@@ -57,11 +60,13 @@ def oblicz_onp(onp):
                 stos.append(a / b)
             elif znak == '^':
                 stos.append(a ** b)
-    if len(stos) == 1:
-        return stos[0]
-    else:
-        return "Błąd"
-
+            elif znak == 'x^2':
+                a = stos.pop()
+                stos.append(math.pow(a, 2))
+        if len(stos) == 1:
+            return stos[0]
+        else:
+            return "Błąd"
 
 def inicjalizacjaOkna():
     root = tk.Tk()
@@ -70,7 +75,7 @@ def inicjalizacjaOkna():
     return root
 
 def inicjalizacjaEkranu(root):
-    ekran = tk.Text(root, bg="black", width=77, height=10, borderwidth=0, padx=10, pady=7, fg='white')
+    ekran = tk.Text(root, bg="black", width=51, height=7, borderwidth=0, padx=12, pady=3, fg='white', font=("Arial", 16))
     ekran.grid(row=0, column=0, columnspan=3, sticky="n")
     return ekran
 
@@ -80,7 +85,7 @@ def inicjalizacjaKonteneraEkranu(root):
     return kontenerEkranu
 
 def inicjalizacjaKonteneraHistorii(root):
-    kontenerHistorii = tk.Text(root, bg='#292929', fg='white', width=45, height=43, pady=12, padx=10)
+    kontenerHistorii = tk.Text(root, bg='#292929', fg='white', width=45, height=38, pady=14, padx=10, font=("Arial", 12))
     kontenerHistorii.grid(row=0, rowspan=5, column=5, columnspan=3, sticky="n")
     return kontenerHistorii
 
@@ -93,8 +98,7 @@ def klik(ekran, przycisk, oblicz):
     def obsluga():
         if przycisk == '=':
             wyrazenie = ekran.get('1.0', tk.END).strip()
-            onp = infix_na_onp(wyrazenie)
-            wynik = oblicz_onp(onp)
+            wynik = oblicz_onp(wyrazenie)
             ekran.delete('1.0', tk.END)
             ekran.insert(tk.END, str(wynik))
             kontenerHistorii.insert(tk.END, str(wyrazenie) + ' = ' + str(wynik) + '\n')
