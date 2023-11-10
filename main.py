@@ -3,11 +3,11 @@ import math
 
 przyciski = [
      '7', '8', '9', '-',
-     '(', ')','\u21BA', 'C',
-     '7', '8', '9','-',
-     '4', '5', '6','/',
-     '1', '2', '3','*',
-     'x^2', '0', '+','=',
+     '(', ')', '\u21BA', 'C',
+     '7', '8', '9', '-',
+     '4', '5', '6', '/',
+     '1', '2', '3', '*',
+     'x^2', '0', '+', '=',
 ]
 wynik = 0
 
@@ -59,19 +59,17 @@ def oblicz_onp(wyrazenie):
             elif znak == '/':
                 stos.append(a / b)
             elif znak == '^':
-                stos.append(a ** b)
-            elif znak == 'x^2':
-                a = stos.pop()
                 stos.append(math.pow(a, 2))
-        if len(stos) == 1:
-            return stos[0]
-        else:
-            return "Błąd"
+    if len(stos) == 1:
+        return stos[0]
+    else:
+        return "Błąd"
 
 def inicjalizacjaOkna():
     root = tk.Tk()
     root.geometry('1016x712')
     root.title('Kalkulator')
+    root.resizable(False, False)
     return root
 
 def inicjalizacjaEkranu(root):
@@ -94,7 +92,7 @@ def label(kontenerEkranu):
     label.grid(row=1, column=0, columnspan=3)
     return label
 
-def klik(ekran, przycisk, oblicz):
+def klik(ekran, przycisk, onp, oblicz):
     def obsluga():
         if przycisk == '=':
             wyrazenie = ekran.get('1.0', tk.END).strip()
@@ -102,6 +100,28 @@ def klik(ekran, przycisk, oblicz):
             ekran.delete('1.0', tk.END)
             ekran.insert(tk.END, str(wynik))
             kontenerHistorii.insert(tk.END, str(wyrazenie) + ' = ' + str(wynik) + '\n')
+
+            def onp_do_nawias(onp):
+                stos = []
+                tokens = onp.split()
+                for token in tokens:
+                    if token.isnumeric():  # liczba
+                        stos.append(token)
+                    else:  # operator
+                        if len(stos) < 2:
+                            return "Błąd: Za mało liczb"
+                        liczba2 = stos.pop()
+                        liczba1 = stos.pop()
+                        wyr = f'({liczba1} {token} {liczba2})'
+                        stos.append(wyr)
+                if len(stos) == 1:
+                    return stos[0]
+                else:
+                    return "Błąd: Za dużo liczb"
+            onp_wyr = ekran.get('1.0', tk.END).replace('', ' ').strip()
+            print(onp_wyr)
+            wyr = onp_do_nawias(onp_wyr)
+            print(wyr)
         elif przycisk == 'C':
             ekran.delete('1.0', tk.END)
         elif przycisk == 'x^2':
@@ -118,13 +138,13 @@ def klik(ekran, przycisk, oblicz):
 
 def oblicz(ekran, kontenerHistorii):
     wyrazenie = ekran.get('1.0', tk.END)
-    wyrazenie = wyrazenie.strip()  # Usuń białe znaki na początku i końcu
+    wyrazenie.strip()  # Usuń białe znaki na początku i końcu
     try:
         #wynik = str(eval(wyrazenie))
         #kontenerHistorii.insert(tk.END, wyrazenie + ' = ' + wynik + '\n')
         ekran.delete('1.0', tk.END)
         #ekran.insert(tk.END, wynik)
-    except Exception as e:
+    except:
         ekran.delete('1.0', tk.END)
         ekran.insert(tk.END, 'Błąd')
 
@@ -137,7 +157,7 @@ def inicjalizacjaPrzyciskow(kontenerEkranu, ekran):
             j += 1
         button[i] = tk.Button(kontenerEkranu, text=przycisk, width=18, height=4, pady=18, padx=11, borderwidth=1)
         button[i].grid(row=j, column=i % 4, columnspan=1, pady=2, padx=2)
-        button[i].configure(command=klik(ekran, przycisk, oblicz))
+        button[i].configure(command=klik(ekran, przycisk, oblicz, oblicz))
 
     return button
 
